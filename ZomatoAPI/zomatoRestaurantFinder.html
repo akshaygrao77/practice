@@ -1,0 +1,108 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+        <style>
+            td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                text-align: center;
+            }
+        </style>
+        <script>
+            function retrieveCityID(myurl)
+            {
+                $.ajax({
+                    url: myurl,
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '57109236f54b1fc62e6637d4b1534f98');
+                    },
+                    success: function(data){
+                        var txt=JSON.stringify(data);
+                        var obj=JSON.parse(txt);
+                        var city_id=obj.location_suggestions[0].id;
+                        retrieveCuisineInCity(city_id);
+                    }
+                });
+            }
+            function retrieveCuisineInCity(city_id)
+            {
+                $.ajax({
+                    url: "https://developers.zomato.com/api/v2.1/cuisines?city_id="+city_id,
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '57109236f54b1fc62e6637d4b1534f98');
+                    },
+                    success: function(data){
+                        var txt=JSON.stringify(data);
+                        var obj=JSON.parse(txt);
+                        
+                        for (var field in obj.cuisines) {
+                            $('<option value="'+ obj.cuisines[field].cuisine.cuisine_id +'">'+obj.cuisines[field].cuisine.cuisine_name+'</option>').appendTo('#cuisine');
+                        }
+                        
+                        
+                    }
+                });
+            }
+            function getRestaurants(city_id,cuisine_id)
+            {
+                $.ajax({
+                    url: "https://developers.zomato.com/api/v2.1/search?entity_id="+city_id+"&entity_type=city&cuisines="+cuisine_id,
+                    type: 'GET',
+                    dataType: 'json',
+                    contentType: "application/json",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("user-key", '57109236f54b1fc62e6637d4b1534f98');
+                    },
+                    success: function(data){
+                        var txt=JSON.stringify(data);
+                        var obj=JSON.parse(txt);
+                        document.getElementById("myTable").style.display="block";
+                        for(var i=0;i<obj.restaurants.length;i++)
+                        {
+                            myFunction(obj.restaurants[i].restaurant.name,obj.restaurants[0].restaurant.user_rating.aggregate_rating);
+                        }
+                        myFunction("Restaurant Name","Restaurant Rating");
+                    }
+                });
+            }
+            function searchZomato(cityName)
+            {
+                var citydetails="https://developers.zomato.com/api/v2.1/cities?q="+cityName;
+                retrieveCityID(citydetails);
+            }
+            function myFunction(cell1val,cell2val) {
+                var table = document.getElementById("myTable");
+                var row = table.insertRow(0);
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                cell1.innerHTML = cell1val;
+                cell2.innerHTML = cell2val;
+            }
+        </script>
+        <body>
+            <form>
+                City:
+                <input type="text" name="cityName" onchange="searchZomato(cityName.value);" placeholder="Enter a city name to search for restaurants"/>
+                <br>
+                Cuisine
+                <select id="cuisine" name="cuisine">
+                    
+                </select>
+                <br>
+                <input type="button" style="color: green;" value="Search" onclick="getRestaurants(cityName.value,cuisine.value);"/>
+                <table id="myTable">
+                </table>
+            </form>
+            
+        </body>
+        
+    </head>
+    
+</html>
